@@ -1,0 +1,59 @@
+import numpy as np
+
+class SimpleNeuralNetwork:
+    def __init__(self, input_size, hidden_size, output_size):
+        # Random weight initialization
+        self.weights_input_hidden = np.random.randn(input_size, hidden_size)
+        self.bias_hidden = np.zeros((1, hidden_size))
+        
+        self.weights_hidden_output = np.random.randn(hidden_size, output_size)
+        self.bias_output = np.zeros((1, output_size))
+
+    def sigmoid(self, x):
+        return 1 / (1 + np.exp(-x))
+
+    def sigmoid_derivative(self, x):
+        return x * (1 - x)
+
+    def forward(self, X):
+        # Hidden layer
+        self.hidden_layer = self.sigmoid(np.dot(X, self.weights_input_hidden) + self.bias_hidden)
+        
+        # Output layer
+        self.output = self.sigmoid(np.dot(self.hidden_layer, self.weights_hidden_output) + self.bias_output)
+        
+        return self.output
+
+    def train(self, X, y, epochs=10000, learning_rate=0.1):
+        for _ in range(epochs):
+            # Forward propagation
+            output = self.forward(X)
+            
+            # Backpropagation
+            output_error = y - output
+            output_delta = output_error * self.sigmoid_derivative(output)
+            
+            hidden_error = np.dot(output_delta, self.weights_hidden_output.T)
+            hidden_delta = hidden_error * self.sigmoid_derivative(self.hidden_layer)
+            
+            # Weight updates
+            self.weights_hidden_output += learning_rate * np.dot(self.hidden_layer.T, output_delta)
+            self.bias_output += learning_rate * np.sum(output_delta, axis=0, keepdims=True)
+            
+            self.weights_input_hidden += learning_rate * np.dot(X.T, hidden_delta)
+            self.bias_hidden += learning_rate * np.sum(hidden_delta, axis=0, keepdims=True)
+
+# Example usage
+if __name__ == "__main__":
+    # XOR problem dataset
+    X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+    y = np.array([[0], [1], [1], [0]])
+
+    # Create and train neural network
+    nn = SimpleNeuralNetwork(input_size=2, hidden_size=4, output_size=1)
+    nn.train(X, y)
+
+    # Test predictions
+    predictions = nn.forward(X)
+    print("Predictions:\n", predictions)
+    print("\nTarget Values:\n", y)
